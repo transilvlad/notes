@@ -202,7 +202,7 @@
             $this->versions = [];
             foreach($file as $k => $line) {
                 // parse line and extract hash/version
-                preg_match("/\[([a-z0-9]+)\].*?([0-9]{4}\.[0-9]{1,2}\.[0-9]{1,2})/", $line, $matches);
+                preg_match("/\[([a-z0-9]+)\]\s\[maven\-release\-plugin\].*?\(.*\)prepare\srelease\s(.*)/", $line, $matches);
 
                 // record versions and hashes except last
                 if (count($matches) > 1 && $k < count($file)) {
