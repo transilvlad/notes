@@ -14,6 +14,7 @@ Optional:
    -v           Show version
    -p           Project directory path
    -l           Logfile name
+  --help        Show help
   --list        List latest releases
   --show        Show selected version changes
   --from        Show changes from this version onwards
