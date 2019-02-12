@@ -28,6 +28,10 @@
         ];
 
         public static $long = [
+            // Built in
+            "h" => "Show help",
+
+            // Custom
             "list" => "List latest releases",
             "show:" => "Show selected version changes",
             "from:" => "Show changes from this version onwards",
@@ -146,7 +150,7 @@
          * Check built-in options called
          */
         private function checkBuiltIn() {
-            if (in_array("h", array_keys(Usage::$opts))) Display::help();
+            if (in_array("h", array_keys(Usage::$opts)) || in_array("help", array_keys(Usage::$opts))) Display::help();
             if (in_array("v", array_keys(Usage::$opts))) Display::version();
         }
 
