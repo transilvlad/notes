@@ -29,7 +29,7 @@
 
         public static $long = [
             // Built in
-            "h" => "Show help",
+            "help" => "Show help",
 
             // Custom
             "list" => "List latest releases",
@@ -195,7 +195,7 @@
         /**
          * Versions
          */
-        public function versions() {
+        private function versions() {
             // execute git log grep for maven releases
             shell_exec("cd " . $this->project . " && git log --pretty=format:\"[%h] %s\" -500 | grep \"maven-release-plugin\" | grep \"prepare release\" > " . $this->tmpfile);
 
@@ -221,7 +221,7 @@
         /**
          * List
          */
-        public function list() {
+        private function list() {
             $this->out("Versions:");
             foreach($this->versions as $k => $array) {
                 if($k < 10) $this->out($array[0]);
@@ -233,7 +233,7 @@
         /**
          * Show
          */
-        public function show($version = "") {
+        private function show($version = "") {
             // pick start/end hashes for selected version
             $start = "";
             $end = "";
