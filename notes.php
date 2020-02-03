@@ -176,6 +176,7 @@
         private $tmpfile;
         private $versions;
         private $show;
+        private $from;
         private $list;
 
         public function __construct() {
@@ -184,12 +185,13 @@
             $this->tmpfile = $tmp = tempnam("/tmp", "notes");
             $this->list = array_key_exists("list", Usage::$opts);
             $this->show = array_key_exists("show", Usage::$opts) ? Usage::$opts["show"] : "";
+            $this->from = array_key_exists("from", Usage::$opts) ? Usage::$opts["from"] : "";
 
             file_put_contents($this->logfile, ""); // clear logfile
 
             $this->versions();
             if($this->list) $this->list();
-            if(!empty($this->show)) $this->show($this->show);
+            if(!empty($this->show)) $this->show($this->show, $this->from);
         }
 
         /**
@@ -206,7 +208,7 @@
             $this->versions = [];
             foreach($file as $k => $line) {
                 // parse line and extract hash/version
-                preg_match("/\[([a-z0-9]+)\]\s\[maven\-release\-plugin\].*?\(.*\)prepare\srelease\s(.*)/", $line, $matches);
+                preg_match("/\[([a-z0-9]+)\]\s\[maven\-release\-plugin\].*?\(.*\)prepare\srelease\s(.*?)(\s|$)/", $line, $matches);
 
                 // record versions and hashes except last
                 if (count($matches) > 1 && $k < count($file)) {
@@ -233,20 +235,23 @@
         /**
          * Show
          */
-        private function show($version = "") {
+        private function show($show = "", $from = "") {
             // pick start/end hashes for selected version
             $start = "";
             $end = "";
             foreach($this->versions as $k => $array) {
-                if (count($array) == 2 && $array[0] == $version) {
+                if (count($array) == 2 && $array[0] == $show) {
                     $end = $array[1];
+                    if (empty($from)) $start = $this->versions[$k+1][1];
+                }
+                if (count($array) == 2 && !empty($from) && $array[0] == $from) {
                     $start = $this->versions[$k+1][1];
                 }
             }
 
             // validate
             if(empty($start) || empty($end)) {
-                Display::error("Cannot find version: " . $version);
+                Display::error("Cannot find version: " . $show . (!empty($from) ? " or " . $from : ""));
             }
 
             // execute git log grep for release commits
@@ -273,9 +278,9 @@
             }
 
             // tickets
-            if(count($tickets) > 0) $this->out("Tickets:");
             $unique = array_unique($tickets);
             sort($unique);
+            if(count($tickets) > 0) $this->out("Tickets (" . count($unique) . "):");
             foreach($unique AS $line) {
                 $this->out($line);
             }
@@ -284,7 +289,7 @@
             if(count($tickets) > 0 && count($changes) > 0) $this->out("");
 
             // changes
-            if(count($changes) > 0) $this->out("Changes:");
+            if(count($changes) > 0) $this->out("Changes (" . count($changes) . "):");
             foreach($changes AS $line) {
                 $this->out($line);
             }
