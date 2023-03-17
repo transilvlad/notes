@@ -1,4 +1,4 @@
-#!/usr/bin/php
+#!/usr/bin/env php
 <?php
 
     /**
@@ -45,7 +45,7 @@
         /**
          * Get description
          */
-        public function desc($param = "") {
+        public static function desc($param = "") {
             $opts = strlen($param) == 1 ? Config::$short : Config::$long;
 
             foreach([$param, $param . ":", $param . "::"] as $entry) {
@@ -81,8 +81,8 @@
             Display::about();
 
             echo "Usage: " . basename(__FILE__) . " ";
-            if(count($short) > 0) echo "[-" . implode($short, "][-") . "]";
-            if(count($long) > 0) echo "[--" . implode($long, "][--") . "]";
+            if(count($short) > 0) echo "[-" . implode("][-", $short) . "]";
+            if(count($long) > 0) echo "[--" . implode("][--", $long) . "]";
             echo "\r\n";
             echo "\r\n";
 
@@ -150,7 +150,7 @@
          * Check built-in options called
          */
         private function checkBuiltIn() {
-            if (in_array("h", array_keys(Usage::$opts)) || in_array("help", array_keys(Usage::$opts))) Display::help();
+            if (in_array("h", array_keys(Usage::$opts)) || in_array("help", array_keys(Usage::$opts)) || empty(Usage::$opts)) Display::help();
             if (in_array("v", array_keys(Usage::$opts))) Display::version();
         }
 
@@ -175,9 +175,9 @@
         private $logfile;
         private $tmpfile;
         private $versions;
+        private $list;
         private $show;
         private $from;
-        private $list;
 
         public function __construct() {
             $this->project = array_key_exists("p", Usage::$opts) ? Usage::$opts["p"] : "./";
@@ -190,7 +190,7 @@
             file_put_contents($this->logfile, ""); // clear logfile
 
             $this->versions();
-            if($this->list) $this->list();
+            if($this->list || ($this->project != null && count(Usage::$opts) == 1)) $this->list();
             if(!empty($this->show)) $this->show($this->show, $this->from);
         }
 
@@ -242,16 +242,21 @@
             foreach($this->versions as $k => $array) {
                 if (count($array) == 2 && $array[0] == $show) {
                     $end = $array[1];
-                    if (empty($from)) $start = $this->versions[$k+1][1];
+                    if (empty($from)) {
+                        $start = $this->versions[$k+1][1];
+                    }
                 }
-                if (count($array) == 2 && !empty($from) && $array[0] == $from) {
-                    $start = $this->versions[$k+1][1];
+
+                if (!empty($from)) {
+                    if (count($array) == 2 && $array[0] == $from) {
+                        $start = $this->versions[$k+1][1];
+                    }
                 }
             }
 
             // validate
             if(empty($start) || empty($end)) {
-                Display::error("Cannot find version: " . $show . (!empty($from) ? " or " . $from : ""));
+                Display::error("Cannot find version: " . $show);
             }
 
             // execute git log grep for release commits
@@ -278,9 +283,9 @@
             }
 
             // tickets
+            if(count($tickets) > 0) $this->out("Tickets:");
             $unique = array_unique($tickets);
             sort($unique);
-            if(count($tickets) > 0) $this->out("Tickets (" . count($unique) . "):");
             foreach($unique AS $line) {
                 $this->out($line);
             }
@@ -289,7 +294,7 @@
             if(count($tickets) > 0 && count($changes) > 0) $this->out("");
 
             // changes
-            if(count($changes) > 0) $this->out("Changes (" . count($changes) . "):");
+            if(count($changes) > 0) $this->out("Changes:");
             foreach($changes AS $line) {
                 $this->out($line);
             }
